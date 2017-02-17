@@ -51,11 +51,11 @@ public class FullTextSearchService {
 		log.info("findByTextMatch ");
 
         		
-		SearchQueryResult result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.matchPhrase(searchText)).fields("merchant"));
+		SearchQueryResult result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.matchPhrase(searchText)).fields("summary"));
 		log.info("****** total  hits := "+ result.hits().size());
 		for (SearchQueryRow hit : result.hits()) {
 		    
-		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("merchant"));
+		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("title"));
 		}
 		
 	}
@@ -77,7 +77,6 @@ public class FullTextSearchService {
 	public static void findByRegExp(String regexp) throws Exception {
 		log.info(" findByRegExp ");
 		RegexpQuery rq = new RegexpQuery(regexp).field("topics");
-		
 		SearchQueryResult resultRegExp = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, rq));
 		log.info("****** total  hits := "+ resultRegExp.hits().size());
 		for (SearchQueryRow hit : resultRegExp.hits()) {

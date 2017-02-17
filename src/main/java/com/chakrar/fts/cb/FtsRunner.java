@@ -19,21 +19,21 @@ public class FtsRunner implements CommandLineRunner {
         log.info("...Searching...");
 
 		       
-        //FullTextSearchService.findByTextMatch("developer");
+        FullTextSearchService.findByTextMatch("developer");
         
-		//FullTextSearchService.findByTextFuzzy("sysops");
+		FullTextSearchService.findByTextFuzzy("sysops");
 		
-		//FullTextSearchService.findByRegExp("[a-z]*lization");
+		FullTextSearchService.findByRegExp("[a-z]*lization");
 		
-        //FullTextSearchService.findByRegExp("[a-z]*\\s*reality");
+        FullTextSearchService.findByRegExp("[a-z]*\\s*reality");
         
-		//FullTextSearchService.findByPrefix("micro");
+		FullTextSearchService.findByPrefix("micro");
         
-        //FullTextSearchService.findByMatchPhrase("DevOps System Administrators");
+        FullTextSearchService.findByMatchPhrase("DevOps System Administrators");
         
-        //FullTextSearchService.findByMatchPhrase("Docker with couchbase");
+        FullTextSearchService.findByMatchPhrase("Docker with couchbase");
         
-        //FullTextSearchService.findByNumberRange(5000, 30000);
+        FullTextSearchService.findByNumberRange(5000, 30000);
         
         FullTextSearchService.findByMatchCombination("aws", "containers");
 	}
