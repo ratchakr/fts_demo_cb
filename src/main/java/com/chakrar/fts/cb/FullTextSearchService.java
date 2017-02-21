@@ -5,11 +5,11 @@ package com.chakrar.fts.cb;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.couchbase.core.CouchbaseTemplate;
 import org.springframework.stereotype.Service;
 
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.Cluster;
-import com.couchbase.client.java.CouchbaseCluster;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.queries.BooleanQuery;
@@ -29,147 +29,161 @@ import com.couchbase.client.java.search.result.SearchQueryRow;
  */
 @Service
 public class FullTextSearchService {
-	
+
+	@Autowired
+	private CouchbaseTemplate template;
+
 	private static final Logger log = LoggerFactory.getLogger(FullTextSearchService.class);
-	
-	private static Bucket bucket;
-	
-	
+
+	private Bucket bucket;
+
 	/**
 	 * @return the bucket
 	 */
-	public static Bucket getBucket() {
+	public Bucket getBucket() {
 		if (null != bucket) {
 			return bucket;
 		}
-		Cluster cluster = CouchbaseCluster.create("127.0.0.1");
-		bucket = cluster.openBucket(FtsConstants.BUCKET_CONF);		
+		bucket = template.getCouchbaseBucket();
+		log.info("******** Bucket :: = " + bucket.name());
 		return bucket;
 	}
 
-	public static void findByTextMatch(String searchText) throws Exception {
+	public void findByTextMatch(String searchText) throws Exception {
 		log.info("findByTextMatch ");
-
-        		
-		SearchQueryResult result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.matchPhrase(searchText)).fields("summary"));
-		log.info("****** total  hits := "+ result.hits().size());
+		SearchQueryResult result = getBucket().query(
+				new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.matchPhrase(searchText)).fields("summary"));
+		log.info("****** total  hits := " + result.hits().size());
 		for (SearchQueryRow hit : result.hits()) {
-		    
-		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("title"));
+			log.info("****** score := " + hit.score() + " and content := "
+					+ bucket.get(hit.id()).content().get("title"));
 		}
-		
 	}
-	
-	public static void findByTextFuzzy(String searchText) throws Exception {
+
+	public void findByTextFuzzy(String searchText) throws Exception {
 		log.info(" findByTextFuzzy ");
 
-		
-		SearchQueryResult resultFuzzy = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.match(searchText).fuzziness(3)).fields("topics"));
-		
-		log.info("****** total  hits := "+ resultFuzzy.hits().size());
+		SearchQueryResult resultFuzzy = getBucket()
+				.query(new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.match(searchText).fuzziness(3))
+						.fields("topics"));
+
+		log.info("****** total  hits := " + resultFuzzy.hits().size());
 		for (SearchQueryRow hit : resultFuzzy.hits()) {
-		    
-		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("topics"));
+
+			log.info("****** score := " + hit.score() + " and content := "
+					+ bucket.get(hit.id()).content().get("topics"));
 		}
-		
-	}	
-	
-	public static void findByRegExp(String regexp) throws Exception {
+
+	}
+
+	public void findByRegExp(String regexp) throws Exception {
 		log.info(" findByRegExp ");
 		RegexpQuery rq = new RegexpQuery(regexp).field("topics");
 		SearchQueryResult resultRegExp = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, rq));
-		log.info("****** total  hits := "+ resultRegExp.hits().size());
+		log.info("****** total  hits := " + resultRegExp.hits().size());
 		for (SearchQueryRow hit : resultRegExp.hits()) {
-		    
-		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("topics"));
+
+			log.info("****** score := " + hit.score() + " and content := "
+					+ bucket.get(hit.id()).content().get("topics"));
 		}
-		
+
 	}
-	
-	
-	public static void findByPrefix(String prefix) throws Exception {
+
+	public void findByPrefix(String prefix) throws Exception {
 		log.info(" findByPrefix ");
 		PrefixQuery pq = new PrefixQuery(prefix).field("summary");
-		SearchQueryResult resultPrefix = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, pq).fields("summary"));
-		log.info("****** total  hits := "+ resultPrefix.hits().size());
+		SearchQueryResult resultPrefix = getBucket()
+				.query(new SearchQuery(FtsConstants.FTS_IDX_CONF, pq).fields("summary"));
+		log.info("****** total  hits := " + resultPrefix.hits().size());
 		for (SearchQueryRow hit : resultPrefix.hits()) {
-		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("summary"));
+			log.info("****** score := " + hit.score() + " and content := "
+					+ bucket.get(hit.id()).content().get("summary"));
 		}
 	}
-	
-	
-	
-	public static void findByMatchPhrase(String matchPhrase) throws Exception {
+
+	public void findByMatchPhrase(String matchPhrase) throws Exception {
 		log.info(" findByMatchPhrase ");
 		MatchPhraseQuery mpq = new MatchPhraseQuery(matchPhrase).field("speakers.talk");
-		SearchQueryResult resultPrefix = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, mpq).fields("speakers.talk"));
-		log.info("****** total  hits := "+ resultPrefix.hits().size());
+		SearchQueryResult resultPrefix = getBucket()
+				.query(new SearchQuery(FtsConstants.FTS_IDX_CONF, mpq).fields("speakers.talk"));
+		log.info("****** total  hits := " + resultPrefix.hits().size());
 		for (SearchQueryRow hit : resultPrefix.hits()) {
-		    log.info("****** score := " + hit.score() + " and content := "+ bucket.get(hit.id()).content().get("title") + " speakers = "+bucket.get(hit.id()).content().get("speakers"));
+			log.info("****** score := " + hit.score() + " and content := " + bucket.get(hit.id()).content().get("title")
+					+ " speakers = " + bucket.get(hit.id()).content().get("speakers"));
 		}
 	}
-	
-	
-	public static void findByNumberRange(Integer min, Integer max) throws Exception {
+
+	public void findByNumberRange(Integer min, Integer max) throws Exception {
 		log.info(" findByNumberRange ");
 		NumericRangeQuery nrq = new NumericRangeQuery().min(min).max(max).field("attendees");
-		SearchQueryResult resultPrefix = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, nrq).fields("title", "attendees", "location"));
-		log.info("****** total  hits := "+ resultPrefix.hits().size());
+		SearchQueryResult resultPrefix = getBucket()
+				.query(new SearchQuery(FtsConstants.FTS_IDX_CONF, nrq).fields("title", "attendees", "location"));
+		log.info("****** total  hits := " + resultPrefix.hits().size());
 		for (SearchQueryRow hit : resultPrefix.hits()) {
 			JsonDocument row = bucket.get(hit.id());
-		    log.info("****** score := " + hit.score() + " and title := "+ row.content().get("title") + " attendees := "+ row.content().get("attendees") + " location := " + row.content().get("location"));
+			log.info("****** score := " + hit.score() + " and title := " + row.content().get("title") + " attendees := "
+					+ row.content().get("attendees") + " location := " + row.content().get("location"));
 		}
-	}	
-	
-	public static void findByMatchCombination(String text1, String text2) throws Exception {
+	}
+
+	public void findByMatchCombination(String text1, String text2) throws Exception {
 		log.info(" findByMatchCombination ");
-		
+
 		MatchQuery mq1 = new MatchQuery(text1).field("topics");
-		
+
 		MatchQuery mq2 = new MatchQuery(text2).field("topics");
-		
-		
-		SearchQueryResult match1Result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, mq1).fields("title", "attendees", "location", "topics"));
-		
-		
-		log.info("****** total  hits for match1 := "+ match1Result.hits().size());
+
+		SearchQueryResult match1Result = getBucket().query(
+				new SearchQuery(FtsConstants.FTS_IDX_CONF, mq1).fields("title", "attendees", "location", "topics"));
+
+		log.info("****** total  hits for match1 := " + match1Result.hits().size());
 		for (SearchQueryRow hit : match1Result.hits()) {
 			JsonDocument row = bucket.get(hit.id());
-		    log.info("****** scores for match 1 := " + hit.score() + " and title := "+ row.content().get("title") + " attendees := "+ row.content().get("attendees") + " topics := " + row.content().get("topics"));
+			log.info("****** scores for match 1 := " + hit.score() + " and title := " + row.content().get("title")
+					+ " attendees := " + row.content().get("attendees") + " topics := " + row.content().get("topics"));
 		}
-		
-		
-		SearchQueryResult match2Result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, mq2).fields("title", "attendees", "location", "topics"));
-		log.info("****** total  hits for match2 := "+ match2Result.hits().size());
+
+		SearchQueryResult match2Result = getBucket().query(
+				new SearchQuery(FtsConstants.FTS_IDX_CONF, mq2).fields("title", "attendees", "location", "topics"));
+		log.info("****** total  hits for match2 := " + match2Result.hits().size());
 		for (SearchQueryRow hit : match2Result.hits()) {
 			JsonDocument row = bucket.get(hit.id());
-		    log.info("****** scores for match 2:= " + hit.score() + " and title := "+ row.content().get("title") + " attendees := "+ row.content().get("attendees") + " topics := " + row.content().get("topics"));
+			log.info("****** scores for match 2:= " + hit.score() + " and title := " + row.content().get("title")
+					+ " attendees := " + row.content().get("attendees") + " topics := " + row.content().get("topics"));
 		}
-		
+
 		ConjunctionQuery conjunction = new ConjunctionQuery(mq1, mq2);
-		SearchQueryResult result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, conjunction).fields("title", "attendees", "location", "topics"));
-		log.info("****** total  hits for conjunction query := "+ result.hits().size());
+		SearchQueryResult result = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, conjunction)
+				.fields("title", "attendees", "location", "topics"));
+		log.info("****** total  hits for conjunction query := " + result.hits().size());
 		for (SearchQueryRow hit : result.hits()) {
 			JsonDocument row = bucket.get(hit.id());
-		    log.info("****** scores for conjunction query:= " + hit.score() + " and title := "+ row.content().get("title") + " attendees := "+ row.content().get("attendees") + " topics := " + row.content().get("topics"));
+			log.info("****** scores for conjunction query:= " + hit.score() + " and title := "
+					+ row.content().get("title") + " attendees := " + row.content().get("attendees") + " topics := "
+					+ row.content().get("topics"));
 		}
-		
+
 		DisjunctionQuery dis = new DisjunctionQuery(mq1, mq2);
-		SearchQueryResult resultDis = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, dis).fields("title", "attendees", "location", "topics"));
-		log.info("****** total  hits for disjunction query := "+ resultDis.hits().size());
+		SearchQueryResult resultDis = getBucket().query(
+				new SearchQuery(FtsConstants.FTS_IDX_CONF, dis).fields("title", "attendees", "location", "topics"));
+		log.info("****** total  hits for disjunction query := " + resultDis.hits().size());
 		for (SearchQueryRow hit : resultDis.hits()) {
 			JsonDocument row = bucket.get(hit.id());
-		    log.info("****** scores for disjunction query:= " + hit.score() + " and title := "+ row.content().get("title") + " attendees := "+ row.content().get("attendees") + " topics := " + row.content().get("topics"));
+			log.info("****** scores for disjunction query:= " + hit.score() + " and title := "
+					+ row.content().get("title") + " attendees := " + row.content().get("attendees") + " topics := "
+					+ row.content().get("topics"));
 		}
-		
-		
+
 		BooleanQuery bool = new BooleanQuery().must(mq1).mustNot(mq2);
-		SearchQueryResult resultBool = getBucket().query(new SearchQuery(FtsConstants.FTS_IDX_CONF, bool).fields("title", "attendees", "location", "topics"));
-		log.info("****** total  hits for booelan query := "+ resultBool.hits().size());
+		SearchQueryResult resultBool = getBucket().query(
+				new SearchQuery(FtsConstants.FTS_IDX_CONF, bool).fields("title", "attendees", "location", "topics"));
+		log.info("****** total  hits for booelan query := " + resultBool.hits().size());
 		for (SearchQueryRow hit : resultBool.hits()) {
 			JsonDocument row = bucket.get(hit.id());
-		    log.info("****** scores for resultBool query:= " + hit.score() + " and title := "+ row.content().get("title") + " attendees := "+ row.content().get("attendees") + " topics := " + row.content().get("topics"));
+			log.info("****** scores for resultBool query:= " + hit.score() + " and title := "
+					+ row.content().get("title") + " attendees := " + row.content().get("attendees") + " topics := "
+					+ row.content().get("topics"));
 		}
-	}	
-	
+	}
+
 }
