@@ -5,8 +5,6 @@ package com.chakrar.fts.cb;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.couchbase.core.CouchbaseTemplate;
 import org.springframework.stereotype.Service;
 
 import com.couchbase.client.java.Bucket;
@@ -30,28 +28,26 @@ import com.couchbase.client.java.search.result.SearchQueryRow;
 @Service
 public class FullTextSearchService {
 
-	@Autowired
-	private CouchbaseTemplate template;
-
+	
 	private static final Logger log = LoggerFactory.getLogger(FullTextSearchService.class);
 
 	private Bucket bucket;
+	
+	public FullTextSearchService(Bucket bucket) {
+		this.bucket = bucket;
+		log.info("******** Bucket :: = " + bucket.name());
+	}
 
 	/**
 	 * @return the bucket
 	 */
 	public Bucket getBucket() {
-		if (null != bucket) {
-			return bucket;
-		}
-		bucket = template.getCouchbaseBucket();
-		log.info("******** Bucket :: = " + bucket.name());
 		return bucket;
 	}
 
 	public void findByTextMatch(String searchText) throws Exception {
 		log.info("findByTextMatch ");
-		SearchQueryResult result = getBucket().query(
+		SearchQueryResult result = bucket.query(
 				new SearchQuery(FtsConstants.FTS_IDX_CONF, SearchQuery.matchPhrase(searchText)).fields("summary"));
 		log.info("****** total  hits := " + result.hits().size());
 		for (SearchQueryRow hit : result.hits()) {
